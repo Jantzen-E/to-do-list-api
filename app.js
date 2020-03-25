@@ -5,11 +5,13 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const DAL = require('./dataAccessLayer');
 const ObjectId = require('mongodb').ObjectId;
-DAL.Connect();
-require('dotenv').config();
-var app = express();
 var cors = require('cors');
-const port = 5001;
+const tasksRouter = require('./routes/api/v1/tasks');
+const listsRouter = require('./routes/api/v1/lists');
+require('dotenv').config(); 
+var app = express();
+DAL.Connect(app.locals);
+// const port = 5001;
 
 // var indexRouter = require('./routes/index');
 // var usersRouter = require('./routes/users');
@@ -17,64 +19,113 @@ const port = 5001;
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-
+app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors());
+
+
 // app.use('/', indexRouter);
 // app.use('/users', usersRouter);
-app.get('/api/items', cors(), async function(req, res) {
-  const result = await DAL.Find();
-  res.send(result);
-});
 
-app.get('/api/items/:id', cors(), async function(req, res) {
-  const id = req.params.id;
-  const item = {
-    _id: ObjectId(id)
-  };
-  const result = await DAL.Find(item);
-  if (result) {
-    res.send(result);
-  }
-  else {
-    res.send('No to do items with ID: ' + id + ' found!');
-  }
-});
+app.use("/api/v1/tasks", tasksRouter);
+app.use('/api/v1/lists', listsRouter);
 
-app.post('/api/items', cors(), async function(req, res) {
-  const item = req.body;
-  if (item.name) {
-    const result = await DAL.Insert(item);
-    res.send('successfully created a to do list item');
-  }
-  else {
-    res.send('failed to create a to do list item');
-  }
-});
+// app.get('/api/tasks', cors(), async function(req, res) {
+//   const result = await DAL.Find(null, 'tasks');
+//   res.send(result);
+// });
 
-app.put('/api/items/:id', cors(), async function(req, res) {
-  const id = req.params.id;
-  const item = {
-    _id: ObjectId(id)
-  };
-  const newItem = req.body;
-  const updatedItem = { $set: newItem};
-  const result = await DAL.Update(item, updatedItem);
-    res.send(result);
-});
+// app.get('/api/lists', cors(), async function(req, res) {
+//   const result = await DAL.Find(null, app.locals.listsCollection);
+//   res.send(result);
+// });
 
-app.delete('/api/items/:id', cors(), async function(req, res) {
-  const id = req.params.id;
-  const item = {
-    _id: ObjectId(id)
-  };
-  const result = await DAL.Remove(item);
-  res.send(result);
-});
+// app.get('/api/tasks', cors(), async function(req, res) {
+//   const result = await DAL.Find(null, app.locals.tasksCollection);
+//   res.send(result);
+// });
+
+// app.get('/api/lists/:id', cors(), async function(req, res) {
+//   const id = req.params.id;
+//   const list = {
+//     _id: ObjectId(id)
+//   };
+//   const result = await DAL.Find(null, 'lists');
+//   if (result) {
+//     res.send(result);
+//   }
+//   else {
+//     res.send('No list with ID: ' + id + ' found!');
+//   }
+// });
+
+// app.get('/api/tasks/:id', cors(), async function(req, res) {
+//   const id = req.params.id;
+//   const list = {
+//     _id: ObjectId(id)
+//   };
+//   const result = await DAL.Find(null, 'tasks');
+//   if (result) {
+//     res.send(result);
+//   }
+//   else {
+//     res.send('No tasks with ID: ' + id + ' found!');
+//   }
+// });
+
+// app.post('/api/lists', cors(), async function(req, res) {
+//   const list = req.body;
+//   if (list.name && list.description && list.due) {
+//     const result = await DAL.Insert(list, 'lists');
+//     res.send('successfully created a to do list');
+//   }
+//   else {
+//     res.send('failed to create a to do list');
+//   }
+// });
+
+// app.put('/api/tasks/:id', cors(), async function(req, res) {
+//   const id = req.params.id;
+//   const task = {
+//     _id: ObjectId(id)
+//   };
+//   const newTask = req.body;
+//   const updatedTask = { $set: newTask};
+//   const result = await DAL.Update('tasks', updatedTask);
+//     res.send(result);
+// });
+
+// app.put('/api/lists/:id', cors(), async function(req, res) {
+//   const id = req.params.id;
+//   const list = {
+//     _id: ObjectId(id)
+//   };
+//   const newList = req.body;
+//   const updatedList = { $set: newList};
+//   const result = await DAL.Update('lists', updatedList);
+//     res.send(result);
+// });
+
+// app.delete('/api/tasks/:id', cors(), async function(req, res) {
+//   const id = req.params.id;
+//   const task = {
+//     _id: ObjectId(id)
+//   };
+//   const result = await DAL.Remove(null, 'tasks');
+//   res.send(result);
+// });
+
+// app.delete('/api/lists/:id', cors(), async function(req, res) {
+//   const id = req.params.id;
+//   const list = {
+//     _id: ObjectId(id)
+//   };
+//   const result = await DAL.Remove(null, 'lists');
+//   res.send(result);
+// });
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -92,15 +143,8 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-app.listen(port, () => {
-  console.log('Server started on port ' + port);
-});
-
-//   console.log(`MONGODB_CONNECTION_STRING: ${process.env.MONGODB_CONNECTION_STRING}`);
-// });
-
 // app.listen(port, () => {
-//   console.log('Server is running on port:', port);
+//   console.log('Server started on port ' + port);
 // });
 
 module.exports = app;

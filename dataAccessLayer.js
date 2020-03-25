@@ -2,37 +2,50 @@ const MongoClient = require('mongodb').MongoClient;
 // const ObjectId = require('mongodb').ObjectId;
 require('dotenv').config();
 const databaseName = 'toDoList-db';
-const collectionName = 'items-to-do';
+// const collectionName = 'items-to-do';
 const mongoDbUrl = process.env.ATLAS_CONNECTION;
 const settings = {
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    useNewUrlParser: true
 };
 
 let database;
 
-const Connect = function() {
-    return new Promise((resolve, reject) => {
-        MongoClient.connect(mongoDbUrl, settings, function(err, client) {
-            if(err) {
-                reject(err);
-            }
-            else {
-                console.log('successfully connected to database');
-                database = client.db(databaseName);
-                resolve();
-            }
-        });
-    });
-};
+// const Connect = function() {
+//     return new Promise((resolve, reject) => {
+//         MongoClient.connect(mongoDbUrl, settings, function(err, client) {
+//             if(err) {
+//                 reject(err);
+//             }
+//             else {
+//                 console.log('successfully connected to database');
+//                 database = client.db(databaseName);
+//                 resolve();
+//             }
+//         });
+//     });
+// };
 
-const Find = function(item) {
+
+const Connect = function(locals) {
+   return MongoClient.connect(mongoDbUrl, settings)
+   .then(client => {
+        locals.listsCollection = client.db(databaseName).collection('lists')
+        locals.tasksCollection = client.db(databaseName).collection('tasks')
+        return client
+   })
+}
+
+
+const Find = function(item, collection) {
     let itemQuery = {};
     if (item) {
         itemQuery = item;
     }
+    console.log(collection);
     return new Promise((resolve, reject) => {
-        const itemCollection=database.collection(collectionName);
-        itemCollection.find(itemQuery).toArray(function(err, res) {
+        
+        collection.find(itemQuery).toArray(function(err, res) {
             if(err) {
                 reject(err);
             }
@@ -44,10 +57,11 @@ const Find = function(item) {
     });
 };
 
-const Insert = function(item) {
+const Insert = function(item, collection) {
+    console.log(collection);
     return new Promise((resolve, reject) => {
-        const itemCollection = database.collection(collectionName);
-        itemCollection.insertOne(item, function(err, res) {
+        
+        collection.insertOne(item, function(err, res) {
             if(err) {
                 reject(err);
             }
@@ -59,10 +73,10 @@ const Insert = function(item) {
     });
 };
 
-const Update = function(item, newItem) {
+const Update = function(newItem, collection) {
     return new Promise((resolve, reject) => {
-        const itemCollection = database.collection(collectionName);
-        itemCollection.updateOne(item, newItem, function(err, res) {
+        
+        collection.updateOne(newItem, function(err, res) {
             if(err) {
                 reject(err);
             }
@@ -74,10 +88,10 @@ const Update = function(item, newItem) {
     });
 };
 
-const Remove = function(item) {
+const Remove = function(item, collection) {
     return new Promise((resolve, reject) => {
-        const itemCollection = database.collection(collectionName);
-        itemCollection.deleteOne(item, function(err, res) {
+        
+        collection.deleteOne(item, function(err, res) {
             if(err) {
                 reject(err);
             }

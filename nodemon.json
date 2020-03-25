@@ -1,0 +1,6 @@
+{
+    "env": {
+        "DEBUG": "to-do-list-fullstack-api:*",
+        "PORT": 5001
+    }
+}
